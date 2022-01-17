@@ -1,5 +1,7 @@
 package game
 
+import "fmt"
+
 // import "fmt"
 
 type Board struct {
@@ -19,52 +21,21 @@ func NewBoard() *Board {
 	return b
 }
 
-// // 石を置きます
-// func (b *Board) PutStone(x int32, y int32, c Color) error {
-// 	// そのマスに石を置けるかチェックします
-// 	if !b.CanPutStone(x, y, c) {
-// 		return fmt.Errorf("Can not put stone x=%v, y=%v color=%v", x, y, ColorToStr(c))
-// 	}
+// 石を置きます
+func (b *Board) PutStone(x int32, y int32, s Symbol) error {
+	// そのマスに石を置けるかチェックします
+	if !b.CanPutStone(x, y) {
+		return fmt.Errorf("can not put stone x=%v, y=%v symbol=%v", x, y, SymbolToStr(s))
+	}
 
-// 	// マスに石を置きます
-// 	b.Cells[x][y] = c
+	// マスに石を置きます
+	b.Cells[x][y] = s
 
-// 	// 置いた石の縦/横/斜めの各方向でひっくり返すことのできる石を全てひっくり返します
-// 	for dx := -1; dx <= 1; dx++ {
-// 		for dy := -1; dy <= 1; dy++ {
-// 			if dx == 0 && dy == 0 {
-// 				continue
-// 			}
-// 			if b.CountTurnableStonesByDirection(x, y, c, int32(dx), int32(dy)) > 0 {
-// 				b.TurnStonesByDirection(x, y, c, int32(dx), int32(dy))
-// 			}
-// 		}
-// 	}
+	return nil
+}
 
-// 	return nil
-// }
-
-// // マスに石を置けるか判定します
-// func (b *Board) CanPutStone(x int32, y int32, c Color) bool {
-// 	// すでに石がある場合は石を置けません
-// 	if b.Cells[x][y] != Empty {
-// 		return false
-// 	}
-
-// 	// 縦/横/斜めの各方向をチェックします
-// 	for dx := -1; dx <= 1; dx++ {
-// 		for dy := -1; dy <= 1; dy++ {
-// 			if dx == 0 && dy == 0 {
-// 				continue
-// 			}
-
-// 			// ひっくり返すことのできる石がひとつでもあれば、石を置けます
-// 			if b.CountTurnableStonesByDirection(x, y, c, int32(dx), int32(dy)) > 0 {
-// 				return true
-// 			}
-// 		}
-// 	}
-
-// 	// ひとつもひっくり返すことできる石がなければ、石を置けません
-// 	return false
-// }
+// マスに石を置けるか判定します
+func (b *Board) CanPutStone(x int32, y int32) bool {
+	// すでに石がある場合は石を置けません
+	return b.Cells[x][y] == Empty
+}
