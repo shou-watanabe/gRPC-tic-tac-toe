@@ -9,6 +9,15 @@ type Game struct {
 	me       Symbol
 }
 
+type Winner int
+
+const (
+	Draw      Winner = iota // 誰も打ってない
+	CircleWin               // マル
+	CrossWin                // バツ
+	NoWin                   // なんでもない
+)
+
 func NewGame(me Symbol) *Game {
 	return &Game{
 		Board: NewBoard(),
@@ -36,19 +45,23 @@ func NewGame(me Symbol) *Game {
 // 	return false, nil
 // }
 
-// // ゲームが終了したかを判定します
-// // 黒と白双方に置ける場所がなければ終了とします
-// func (g *Game) IsGameOver() bool {
-// 	if g.Board.AvailableCellCount(Black) > 0 {
-// 		return false
-// 	}
+// ゲームが終了したかを判定します
+// 黒と白双方に置ける場所がなければ終了とします
+func (g *Game) IsGameOver() Winner {
+	if !g.Board.IsAvailableEmpty() {
+		return Draw
+	}
 
-// 	if g.Board.AvailableCellCount(White) > 0 {
-// 		return false
-// 	}
+	if g.Board.IsAvailableLine(Circle) {
+		return CircleWin
+	}
 
-// 	return true
-// }
+	if g.Board.IsAvailableLine(Cross) {
+		return CrossWin
+	}
+
+	return NoWin
+}
 
 // //　勝者の色を返します。引き分けの場合はNoneを返します
 // func (g *Game) Winner() Symbol {
@@ -77,6 +90,7 @@ func (g *Game) Display(me Symbol) {
 			fmt.Print("｜")
 		}
 	}
+	fmt.Print("｜")
 	fmt.Print("\n")
 	fmt.Println("ーーーーーー")
 
@@ -91,8 +105,6 @@ func (g *Game) Display(me Symbol) {
 	}
 
 	fmt.Println("ーーーーーー")
-
-	// fmt.Printf("Score: BLACK=%d, WHITE=%d REST=%d\n", g.Board.Score(Black), g.Board.Score(White), g.Board.Rest())
 
 	fmt.Print("\n")
 }
