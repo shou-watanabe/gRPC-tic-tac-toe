@@ -9,6 +9,15 @@ type Game struct {
 	me       Symbol
 }
 
+type Winner int
+
+const (
+	Draw      Winner = iota // 誰も打ってない
+	CircleWin               // マル
+	CrossWin                // バツ
+	NoWin                   // なんでもない
+)
+
 func NewGame(me Symbol) *Game {
 	return &Game{
 		Board: NewBoard(),
@@ -16,39 +25,43 @@ func NewGame(me Symbol) *Game {
 	}
 }
 
-// // 手を打ちます。その後盤面を出力します。
-// // 返り値として、ゲームが終了したかどうかを返します。
-// func (g *Game) Move(x int32, y int32, c Symbol) (bool, error) {
-// 	if g.finished {
-// 		return true, nil
-// 	}
-// 	err := g.Board.PutStone(x, y, c)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	g.Display(g.me)
-// 	if g.IsGameOver() {
-// 		fmt.Println("finished")
-// 		g.finished = true
-// 		return true, nil
-// 	}
+// 手を打ちます。その後盤面を出力します。
+// 返り値として、ゲームが終了したかどうかを返します。
+func (g *Game) Move(x int32, y int32, c Symbol) (bool, error) {
+	if g.finished {
+		return true, nil
+	}
+	err := g.Board.PutStone(x, y, c)
+	if err != nil {
+		return false, err
+	}
+	g.Display(g.me)
+	if g.IsGameOver() != NoWin {
+		fmt.Println("finished")
+		g.finished = true
+		return true, nil
+	}
 
-// 	return false, nil
-// }
+	return false, nil
+}
 
-// // ゲームが終了したかを判定します
-// // 黒と白双方に置ける場所がなければ終了とします
-// func (g *Game) IsGameOver() bool {
-// 	if g.Board.AvailableCellCount(Black) > 0 {
-// 		return false
-// 	}
+// ゲームが終了したかを判定します
+// 黒と白双方に置ける場所がなければ終了とします
+func (g *Game) IsGameOver() Winner {
+	if !g.Board.IsAvailableEmpty() {
+		return Draw
+	}
 
-// 	if g.Board.AvailableCellCount(White) > 0 {
-// 		return false
-// 	}
+	if g.Board.IsAvailableLine(Circle) {
+		return CircleWin
+	}
 
-// 	return true
-// }
+	if g.Board.IsAvailableLine(Cross) {
+		return CrossWin
+	}
+
+	return NoWin
+}
 
 // //　勝者の色を返します。引き分けの場合はNoneを返します
 // func (g *Game) Winner() Symbol {
@@ -77,6 +90,7 @@ func (g *Game) Display(me Symbol) {
 			fmt.Print("｜")
 		}
 	}
+	fmt.Print("｜")
 	fmt.Print("\n")
 	fmt.Println("ーーーーーー")
 
@@ -91,8 +105,6 @@ func (g *Game) Display(me Symbol) {
 	}
 
 	fmt.Println("ーーーーーー")
-
-	// fmt.Printf("Score: BLACK=%d, WHITE=%d REST=%d\n", g.Board.Score(Black), g.Board.Score(White), g.Board.Rest())
 
 	fmt.Print("\n")
 }
