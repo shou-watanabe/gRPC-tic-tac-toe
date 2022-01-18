@@ -25,25 +25,25 @@ func NewGame(me Symbol) *Game {
 	}
 }
 
-// // 手を打ちます。その後盤面を出力します。
-// // 返り値として、ゲームが終了したかどうかを返します。
-// func (g *Game) Move(x int32, y int32, c Symbol) (bool, error) {
-// 	if g.finished {
-// 		return true, nil
-// 	}
-// 	err := g.Board.PutStone(x, y, c)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	g.Display(g.me)
-// 	if g.IsGameOver() {
-// 		fmt.Println("finished")
-// 		g.finished = true
-// 		return true, nil
-// 	}
+// 手を打ちます。その後盤面を出力します。
+// 返り値として、ゲームが終了したかどうかを返します。
+func (g *Game) Move(x int32, y int32, c Symbol) (bool, error) {
+	if g.finished {
+		return true, nil
+	}
+	err := g.Board.PutStone(x, y, c)
+	if err != nil {
+		return false, err
+	}
+	g.Display(g.me)
+	if g.IsGameOver() != NoWin {
+		fmt.Println("finished")
+		g.finished = true
+		return true, nil
+	}
 
-// 	return false, nil
-// }
+	return false, nil
+}
 
 // ゲームが終了したかを判定します
 // 黒と白双方に置ける場所がなければ終了とします
