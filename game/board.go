@@ -2,8 +2,6 @@ package game
 
 import "fmt"
 
-// import "fmt"
-
 type Board struct {
 	Cells [][]Symbol
 }

@@ -4,7 +4,6 @@ import "fmt"
 
 type Game struct {
 	Board    *Board
-	started  bool
 	finished bool
 	me       Symbol
 }
@@ -31,7 +30,7 @@ func (g *Game) Move(x int32, y int32, c Symbol) (bool, error) {
 	if g.finished {
 		return true, nil
 	}
-	err := g.Board.PutStone(x, y, c)
+	err := g.Board.PutStone(x-1, y-1, c)
 	if err != nil {
 		return false, err
 	}
@@ -63,17 +62,18 @@ func (g *Game) IsGameOver() Winner {
 	return NoWin
 }
 
-// //　勝者の色を返します。引き分けの場合はNoneを返します
-// func (g *Game) Winner() Symbol {
-// 	black := g.Board.Score(Black)
-// 	white := g.Board.Score(White)
-// 	if black == white {
-// 		return None
-// 	} else if black > white {
-// 		return Black
-// 	}
-// 	return White
-// }
+// 勝者の色を返します。引き分けの場合はNoneを返します
+func (g *Game) Winner() Symbol {
+	if g.Board.IsAvailableLine(Circle) {
+		return Circle
+	}
+
+	if g.Board.IsAvailableLine(Cross) {
+		return Cross
+	}
+
+	return None
+}
 
 // 盤面を出力します
 func (g *Game) Display(me Symbol) {
