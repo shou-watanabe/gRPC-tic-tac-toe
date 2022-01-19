@@ -4,7 +4,6 @@ import "fmt"
 
 type Game struct {
 	Board    *Board
-	started  bool
 	finished bool
 	me       Symbol
 }
@@ -31,7 +30,7 @@ func (g *Game) Move(x int32, y int32, c Symbol) (bool, error) {
 	if g.finished {
 		return true, nil
 	}
-	err := g.Board.PutStone(x, y, c)
+	err := g.Board.PutStone(x-1, y-1, c)
 	if err != nil {
 		return false, err
 	}
