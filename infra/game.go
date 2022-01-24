@@ -3,7 +3,6 @@ package repository
 import (
 	"fmt"
 	"gRPC-tic-tac-toe/domain/entity"
-	"gRPC-tic-tac-toe/domain/object"
 	"gRPC-tic-tac-toe/domain/repository"
 )
 
@@ -34,7 +33,7 @@ func (gr *gameRepository) Move(x int32, y int32, c entity.Symbol, g entity.Game,
 		return false, err
 	}
 	gr.Display(g.Me, g)
-	if gr.IsGameOver(g, b) != object.NoWin {
+	if gr.IsGameOver(g, b) != entity.NoWin {
 		fmt.Println("finished")
 		g.Finished = true
 		return true, nil
@@ -46,20 +45,20 @@ func (gr *gameRepository) Move(x int32, y int32, c entity.Symbol, g entity.Game,
 // ゲームが終了したかを判定します
 // 黒と白双方に置ける場所がなければ終了とします
 // usecase?
-func (gr *gameRepository) IsGameOver(g entity.Game, b entity.Board) object.Winner {
+func (gr *gameRepository) IsGameOver(g entity.Game, b entity.Board) entity.Winner {
 	if !gr.br.IsAvailableEmpty(b) {
-		return object.Draw
+		return entity.Draw
 	}
 
 	if gr.br.IsAvailableLine(entity.Circle, b) {
-		return object.CircleWin
+		return entity.CircleWin
 	}
 
 	if gr.br.IsAvailableLine(entity.Cross, b) {
-		return object.CrossWin
+		return entity.CrossWin
 	}
 
-	return object.NoWin
+	return entity.NoWin
 }
 
 // 勝者の色を返します。引き分けの場合はNoneを返します
