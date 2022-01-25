@@ -6,9 +6,9 @@ import (
 
 type TicTacToe struct {
 	sync.RWMutex
-	started  bool
-	finished bool
-	me       *Player
-	room     *Room
-	game     *Game
+	Started  bool
+	Finished bool
+	Me       *Player
+	Room     *Room
+	Game     *Game
 }

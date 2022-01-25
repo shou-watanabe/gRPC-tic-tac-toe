@@ -30,7 +30,7 @@ func NewBoard() *entity.Board {
 }
 
 // 石を置きます
-func (br *boardRepository) PutStone(x int32, y int32, s entity.Symbol, b entity.Board) error {
+func (br *boardRepository) PutStone(x int32, y int32, s entity.Symbol, b *entity.Board) error {
 	// そのマスに石を置けるかチェックします
 	if !br.CanPutStone(x, y, b) {
 		return fmt.Errorf("can not put stone x=%v, y=%v symbol=%v", x, y, br.sr.SymbolToStr(s))
@@ -43,13 +43,13 @@ func (br *boardRepository) PutStone(x int32, y int32, s entity.Symbol, b entity.
 }
 
 // マスに石を置けるか判定します
-func (br *boardRepository) CanPutStone(x int32, y int32, b entity.Board) bool {
+func (br *boardRepository) CanPutStone(x int32, y int32, b *entity.Board) bool {
 	// すでに石がある場合は石を置けません
 	return b.Cells[x][y] == entity.Empty
 }
 
 // 空きマスがあるか判定
-func (br *boardRepository) IsAvailableEmpty(b entity.Board) bool {
+func (br *boardRepository) IsAvailableEmpty(b *entity.Board) bool {
 	for j := 0; j < 3; j++ {
 		for i := 0; i < 3; j++ {
 			// 空きマスが一つでもあればtrue
@@ -64,7 +64,7 @@ func (br *boardRepository) IsAvailableEmpty(b entity.Board) bool {
 }
 
 // ラインができているか判定
-func (br *boardRepository) IsAvailableLine(s entity.Symbol, b entity.Board) bool {
+func (br *boardRepository) IsAvailableLine(s entity.Symbol, b *entity.Board) bool {
 	for _, line := range config.Lines {
 		for i, cell := range line {
 			// 勝ち手に合わない場合にbreak

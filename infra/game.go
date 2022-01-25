@@ -24,11 +24,11 @@ func NewGame(me entity.Symbol) *entity.Game {
 
 // 手を打ちます。その後盤面を出力します。
 // 返り値として、ゲームが終了したかどうかを返します。
-func (gr *gameRepository) Move(x int32, y int32, c entity.Symbol, g entity.Game, b entity.Board) (bool, error) {
+func (gr *gameRepository) Move(x int32, y int32, s entity.Symbol, g *entity.Game, b *entity.Board) (bool, error) {
 	if g.Finished {
 		return true, nil
 	}
-	err := gr.br.PutStone(x-1, y-1, c, b)
+	err := gr.br.PutStone(x-1, y-1, s, b)
 	if err != nil {
 		return false, err
 	}
@@ -45,7 +45,7 @@ func (gr *gameRepository) Move(x int32, y int32, c entity.Symbol, g entity.Game,
 // ゲームが終了したかを判定します
 // 黒と白双方に置ける場所がなければ終了とします
 // usecase?
-func (gr *gameRepository) IsGameOver(g entity.Game, b entity.Board) entity.Winner {
+func (gr *gameRepository) IsGameOver(g *entity.Game, b *entity.Board) entity.Winner {
 	if !gr.br.IsAvailableEmpty(b) {
 		return entity.Draw
 	}
@@ -63,7 +63,7 @@ func (gr *gameRepository) IsGameOver(g entity.Game, b entity.Board) entity.Winne
 
 // 勝者の色を返します。引き分けの場合はNoneを返します
 // usecase?
-func (gr *gameRepository) Winner(g entity.Game, b entity.Board) entity.Symbol {
+func (gr *gameRepository) Winner(g *entity.Game, b *entity.Board) entity.Symbol {
 	if gr.br.IsAvailableLine(entity.Circle, b) {
 		return entity.Circle
 	}
@@ -77,7 +77,7 @@ func (gr *gameRepository) Winner(g entity.Game, b entity.Board) entity.Symbol {
 
 // 盤面を出力します
 // usecase?
-func (gr *gameRepository) Display(me entity.Symbol, g entity.Game) {
+func (gr *gameRepository) Display(me entity.Symbol, g *entity.Game) {
 	fmt.Println("")
 	if me != entity.None {
 		fmt.Printf("You: %v\n", gr.sr.SymbolToStr(me))
