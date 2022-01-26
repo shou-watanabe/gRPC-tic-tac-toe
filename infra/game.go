@@ -17,8 +17,8 @@ func NewGameRepository(sr repository.SymbolRepository, br repository.BoardReposi
 
 func NewGame(me entity.Symbol) *entity.Game {
 	return &entity.Game{
-		// Board: NewBoard(),
-		Me: me,
+		Board: NewBoard(),
+		Me:    me,
 	}
 }
 
