@@ -24,16 +24,16 @@ func NewGame(me entity.Symbol) *entity.Game {
 
 // 手を打ちます。その後盤面を出力します。
 // 返り値として、ゲームが終了したかどうかを返します。
-func (gr *gameRepository) Move(x int32, y int32, s entity.Symbol, g *entity.Game, b *entity.Board) (bool, error) {
+func (gr *gameRepository) Move(x int32, y int32, s entity.Symbol, g *entity.Game) (bool, error) {
 	if g.Finished {
 		return true, nil
 	}
-	err := gr.br.PutStone(x-1, y-1, s, b)
+	err := gr.br.PutStone(x-1, y-1, s, g.Board)
 	if err != nil {
 		return false, err
 	}
 	gr.Display(g.Me, g)
-	if gr.IsGameOver(g, b) != entity.NoWin {
+	if gr.IsGameOver(g) != entity.NoWin {
 		fmt.Println("finished")
 		g.Finished = true
 		return true, nil
@@ -45,16 +45,16 @@ func (gr *gameRepository) Move(x int32, y int32, s entity.Symbol, g *entity.Game
 // ゲームが終了したかを判定します
 // 黒と白双方に置ける場所がなければ終了とします
 // usecase?
-func (gr *gameRepository) IsGameOver(g *entity.Game, b *entity.Board) entity.Winner {
-	if !gr.br.IsAvailableEmpty(b) {
+func (gr *gameRepository) IsGameOver(g *entity.Game) entity.Winner {
+	if !gr.br.IsAvailableEmpty(g.Board) {
 		return entity.Draw
 	}
 
-	if gr.br.IsAvailableLine(entity.Circle, b) {
+	if gr.br.IsAvailableLine(entity.Circle, g.Board) {
 		return entity.CircleWin
 	}
 
-	if gr.br.IsAvailableLine(entity.Cross, b) {
+	if gr.br.IsAvailableLine(entity.Cross, g.Board) {
 		return entity.CrossWin
 	}
 
@@ -63,12 +63,12 @@ func (gr *gameRepository) IsGameOver(g *entity.Game, b *entity.Board) entity.Win
 
 // 勝者の色を返します。引き分けの場合はNoneを返します
 // usecase?
-func (gr *gameRepository) Winner(g *entity.Game, b *entity.Board) entity.Symbol {
-	if gr.br.IsAvailableLine(entity.Circle, b) {
+func (gr *gameRepository) Winner(g *entity.Game) entity.Symbol {
+	if gr.br.IsAvailableLine(entity.Circle, g.Board) {
 		return entity.Circle
 	}
 
-	if gr.br.IsAvailableLine(entity.Cross, b) {
+	if gr.br.IsAvailableLine(entity.Cross, g.Board) {
 		return entity.Cross
 	}
 
