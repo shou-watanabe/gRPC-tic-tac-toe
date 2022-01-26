@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"gRPC-tic-tac-toe/gen/pb"
-	"gRPC-tic-tac-toe/server/handler"
+	"gRPC-tic-tac-toe/presen/handler"
 )
 
 func main() {

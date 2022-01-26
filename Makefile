@@ -19,4 +19,4 @@ server:
 
 .PHONY: client
 client:
-	go run cmd/main.go
+	go run server/client/main.go
