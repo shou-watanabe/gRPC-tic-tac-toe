@@ -7,11 +7,11 @@ import (
 )
 
 type gameRepository struct {
-	sr symbolRepository
-	br boardRepository
+	sr repository.SymbolRepository
+	br repository.BoardRepository
 }
 
-func NewGameRepository(sr symbolRepository, br boardRepository) repository.GameRepository {
+func NewGameRepository(sr repository.SymbolRepository, br repository.BoardRepository) repository.GameRepository {
 	return &gameRepository{sr: sr, br: br}
 }
 

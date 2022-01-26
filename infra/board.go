@@ -9,10 +9,10 @@ import (
 )
 
 type boardRepository struct {
-	sr symbolRepository
+	sr repository.SymbolRepository
 }
 
-func NewBoardRepository(sr symbolRepository) repository.BoardRepository {
+func NewBoardRepository(sr repository.SymbolRepository) repository.BoardRepository {
 	return &boardRepository{sr: sr}
 }
 

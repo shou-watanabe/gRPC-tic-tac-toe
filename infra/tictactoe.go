@@ -19,10 +19,10 @@ import (
 )
 
 type ticTacToeRepository struct {
-	gr gameRepository
+	gr repository.GameRepository
 }
 
-func NewTicTacToeRepository(gr gameRepository) repository.TicTacToeRepository {
+func NewTicTacToeRepository(gr repository.GameRepository) repository.TicTacToeRepository {
 	return &ticTacToeRepository{gr: gr}
 }
 
