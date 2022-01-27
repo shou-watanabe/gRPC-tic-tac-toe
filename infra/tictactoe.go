@@ -119,7 +119,6 @@ func (tr ticTacToeRepository) ExecPlay(ctx context.Context, cli pb.GameServiceCl
 }
 
 func (tr ticTacToeRepository) Play(t *entity.TicTacToe) (bool, error) {
-	tr.gr.Display(t.Me.Symbol, t.Game)
 	fmt.Print("Input Your Move (ex. A-1):")
 	stdin := bufio.NewScanner(os.Stdin)
 	stdin.Scan()
@@ -134,8 +133,6 @@ func (tr ticTacToeRepository) Play(t *entity.TicTacToe) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-	tr.gr.Display(t.Me.Symbol, t.Game)
 
 	return isGameOver, nil
 }
@@ -185,11 +182,11 @@ func (tr ticTacToeRepository) Receive(ctx context.Context, stream pb.GameService
 			tr.gr.Display(t.Me.Symbol, t.Game)
 		case *pb.PlayResponse_Move:
 			// 手を打たれた
-			color := build.Symbol(res.GetMove().GetPlayer().GetSymbol())
-			if color != t.Me.Symbol {
+			symbol := build.Symbol(res.GetMove().GetPlayer().GetSymbol())
+			if symbol != t.Me.Symbol {
 				move := res.GetMove().GetMove()
 				// クライアント側のゲーム情報に反映させる
-				tr.gr.Move(move.GetX(), move.GetY(), color, t.Game)
+				tr.gr.Move(move.GetX(), move.GetY(), symbol, t.Game)
 				fmt.Print("Input Your Move (ex. A-1):")
 			}
 		case *pb.PlayResponse_Finished:
