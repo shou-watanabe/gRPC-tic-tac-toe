@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"gRPC-tic-tac-toe/build"
 	"gRPC-tic-tac-toe/domain/entity"
@@ -42,7 +43,7 @@ func (tr ticTacToeRepository) PreRun(t *entity.TicTacToe) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return errors.Wrap(err, "Failed to connect to grpc server")
 	}
