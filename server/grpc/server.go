@@ -11,7 +11,9 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"gRPC-tic-tac-toe/gen/pb"
+	repository "gRPC-tic-tac-toe/infra"
 	"gRPC-tic-tac-toe/presen/handler"
+	"gRPC-tic-tac-toe/usecase"
 )
 
 func main() {
@@ -24,7 +26,11 @@ func main() {
 	server := grpc.NewServer()
 
 	pb.RegisterMatchingServiceServer(server, handler.NewMatchingHandler())
-	pb.RegisterGameServiceServer(server, handler.NewGameHandler())
+	sr := repository.NewSymbolRepository()
+	br := repository.NewBoardRepository(sr)
+	gr := repository.NewGameRepository(sr, br)
+	gu := usecase.NewGameUsecase(gr)
+	pb.RegisterGameServiceServer(server, handler.NewGameHandler(gu))
 
 	reflection.Register(server)
 

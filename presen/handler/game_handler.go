@@ -18,10 +18,11 @@ type gameHandler struct {
 	client      map[int32][]pb.GameService_PlayServer // 状態変更時にクライアントにストリーミングを返すために格納する
 }
 
-func NewGameHandler() *gameHandler {
+func NewGameHandler(gu usecase.GameUsecase) *gameHandler {
 	return &gameHandler{
-		games:  make(map[int32]*entity.Game),
-		client: make(map[int32][]pb.GameService_PlayServer),
+		games:       make(map[int32]*entity.Game),
+		client:      make(map[int32][]pb.GameService_PlayServer),
+		gameUsecase: gu,
 	}
 }
 
@@ -107,6 +108,7 @@ func (h *gameHandler) move(roomID int32, x int32, y int32, p *entity.Player) err
 
 	g := h.games[roomID]
 
+	fmt.Println("ここでエラー？")
 	finished, err := h.gameUsecase.Move(x, y, p.Symbol, g)
 	if err != nil {
 		return err
