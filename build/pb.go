@@ -1,11 +1,11 @@
 package build
 
 import (
-	"gRPC-tic-tac-toe/game"
+	"gRPC-tic-tac-toe/domain/entity"
 	"gRPC-tic-tac-toe/gen/pb"
 )
 
-func PBRoom(r *game.Room) *pb.Room {
+func PBRoom(r *entity.Room) *pb.Room {
 	return &pb.Room{
 		Id:    r.ID,
 		Host:  PBPlayer(r.Host),
@@ -13,7 +13,7 @@ func PBRoom(r *game.Room) *pb.Room {
 	}
 }
 
-func PBPlayer(p *game.Player) *pb.Player {
+func PBPlayer(p *entity.Player) *pb.Player {
 	if p == nil {
 		return nil
 	}
@@ -23,20 +23,20 @@ func PBPlayer(p *game.Player) *pb.Player {
 	}
 }
 
-func PBSymbol(c game.Symbol) pb.Symbol {
+func PBSymbol(c entity.Symbol) pb.Symbol {
 	switch c {
-	case game.Circle:
+	case entity.Circle:
 		return pb.Symbol_CIRCLE
-	case game.Cross:
+	case entity.Cross:
 		return pb.Symbol_CROSS
-	case game.Empty:
+	case entity.Empty:
 		return pb.Symbol_EMPTY
 	}
 
 	return pb.Symbol_UNKNOWN
 }
 
-func PBBoard(b *game.Board) *pb.Board {
+func PBBoard(b *entity.Board) *pb.Board {
 	pbCols := make([]*pb.Board_Sym, 0, 10)
 
 	for _, col := range b.Cells {

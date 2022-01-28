@@ -5,20 +5,24 @@ import (
 	"sync"
 
 	"gRPC-tic-tac-toe/build"
-	"gRPC-tic-tac-toe/game"
+	"gRPC-tic-tac-toe/domain/entity"
 	"gRPC-tic-tac-toe/gen/pb"
+	repository "gRPC-tic-tac-toe/infra"
+	"gRPC-tic-tac-toe/usecase"
 )
 
 type GameHandler struct {
 	sync.RWMutex
-	games  map[int32]*game.Game                  // ゲーム情報（盤面など）を格納する
-	client map[int32][]pb.GameService_PlayServer // 状態変更時にクライアントにストリーミングを返すために格納する
+	gameUsecase usecase.GameUsecase
+	games       map[int32]*entity.Game                // ゲーム情報（盤面など）を格納する
+	client      map[int32][]pb.GameService_PlayServer // 状態変更時にクライアントにストリーミングを返すために格納する
 }
 
-func NewGameHandler() *GameHandler {
+func NewGameHandler(gu usecase.GameUsecase) *GameHandler {
 	return &GameHandler{
-		games:  make(map[int32]*game.Game),
-		client: make(map[int32][]pb.GameService_PlayServer),
+		games:       make(map[int32]*entity.Game),
+		client:      make(map[int32][]pb.GameService_PlayServer),
+		gameUsecase: gu,
 	}
 }
 
@@ -54,14 +58,14 @@ func (h *GameHandler) Play(stream pb.GameService_PlayServer) error {
 	}
 }
 
-func (h *GameHandler) start(stream pb.GameService_PlayServer, roomID int32, me *game.Player) error {
+func (h *GameHandler) start(stream pb.GameService_PlayServer, roomID int32, me *entity.Player) error {
 	h.Lock()
 	defer h.Unlock()
 
 	//ゲーム情報がなければ作成する
 	g := h.games[roomID]
 	if g == nil {
-		g = game.NewGame(game.None)
+		g = repository.NewGame(entity.None)
 		h.games[roomID] = g
 		h.client[roomID] = make([]pb.GameService_PlayServer, 0, 2)
 	}
@@ -98,13 +102,14 @@ func (h *GameHandler) start(stream pb.GameService_PlayServer, roomID int32, me *
 	return nil
 }
 
-func (h *GameHandler) move(roomID int32, x int32, y int32, p *game.Player) error {
+func (h *GameHandler) move(roomID int32, x int32, y int32, p *entity.Player) error {
 	h.Lock()
 	defer h.Unlock()
 
 	g := h.games[roomID]
 
-	finished, err := g.Move(x, y, p.Symbol)
+	fmt.Println("ここでエラー？")
+	finished, err := h.gameUsecase.Move(x, y, p.Symbol, g)
 	if err != nil {
 		return err
 	}
@@ -133,7 +138,7 @@ func (h *GameHandler) move(roomID int32, x int32, y int32, p *game.Player) error
 				&pb.PlayResponse{
 					Event: &pb.PlayResponse_Finished{
 						Finished: &pb.PlayResponse_FinishedEvent{
-							Winner: build.PBSymbol(g.Winner()),
+							Winner: build.PBSymbol(h.gameUsecase.Winner(g)),
 							Board:  build.PBBoard(g.Board),
 						},
 					},

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"gRPC-tic-tac-toe/build"
-	"gRPC-tic-tac-toe/game"
+	"gRPC-tic-tac-toe/domain/entity"
 	"gRPC-tic-tac-toe/gen/pb"
 
 	"google.golang.org/grpc/codes"
@@ -16,13 +16,13 @@ import (
 
 type MatchingHandler struct {
 	sync.RWMutex
-	Rooms       map[int32]*game.Room
+	Rooms       map[int32]*entity.Room
 	maxPlayerID int32
 }
 
 func NewMatchingHandler() *MatchingHandler {
 	return &MatchingHandler{
-		Rooms: make(map[int32]*game.Room),
+		Rooms: make(map[int32]*entity.Room),
 	}
 }
 
@@ -34,14 +34,14 @@ func (h *MatchingHandler) JoinRoom(req *pb.JoinRoomRequest, stream pb.MatchingSe
 
 	// プレイヤーの新規作成
 	h.maxPlayerID++
-	me := &game.Player{
+	me := &entity.Player{
 		ID: h.maxPlayerID,
 	}
 
 	// 空いている部屋を探す
 	for _, room := range h.Rooms {
 		if room.Guest == nil {
-			me.Symbol = game.Cross
+			me.Symbol = entity.Cross
 			room.Guest = me
 			stream.Send(&pb.JoinRoomResponse{
 				Status: pb.JoinRoomResponse_MATCHED,
@@ -55,8 +55,8 @@ func (h *MatchingHandler) JoinRoom(req *pb.JoinRoomRequest, stream pb.MatchingSe
 	}
 
 	// 空いている部屋がなかったので部屋を作る
-	me.Symbol = game.Circle
-	room := &game.Room{
+	me.Symbol = entity.Circle
+	room := &entity.Room{
 		ID:   int32(len(h.Rooms)) + 1,
 		Host: me,
 	}

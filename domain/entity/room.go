@@ -1,4 +1,4 @@
-package game
+package entity
 
 type Room struct {
 	ID    int32

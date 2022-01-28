@@ -1,4 +1,4 @@
-package client
+package repository
 
 import (
 	"bufio"
@@ -7,62 +7,62 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"gRPC-tic-tac-toe/build"
-	"gRPC-tic-tac-toe/game"
+	"gRPC-tic-tac-toe/domain/entity"
+	"gRPC-tic-tac-toe/domain/repository"
 	"gRPC-tic-tac-toe/gen/pb"
 )
 
-type TicTacToe struct {
-	sync.RWMutex
-	started  bool
-	finished bool
-	me       *game.Player
-	room     *game.Room
-	game     *game.Game
+type ticTacToeRepository struct {
+	gr repository.GameRepository
 }
 
-func NewTicTacToe() *TicTacToe {
-	return &TicTacToe{}
+func NewTicTacToeRepository(gr repository.GameRepository) repository.TicTacToeRepository {
+	return &ticTacToeRepository{gr: gr}
 }
 
-func (t *TicTacToe) Run() int {
-	if err := t.run(); err != nil {
+func NewTicTacToe() *entity.TicTacToe {
+	return &entity.TicTacToe{}
+}
+
+func (tr ticTacToeRepository) Run(t *entity.TicTacToe) int {
+	if err := tr.PreRun(t); err != nil {
 		fmt.Println(err)
 		return 1
 	}
 	return 0
 }
 
-func (t *TicTacToe) run() error {
+func (tr ticTacToeRepository) PreRun(t *entity.TicTacToe) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return errors.Wrap(err, "Failed to connect to grpc server")
 	}
 	defer conn.Close()
 
 	// マッチング問い合わせ
-	err = t.matching(ctx, pb.NewMatchingServiceClient(conn))
+	err = tr.Matching(ctx, pb.NewMatchingServiceClient(conn), t)
 	if err != nil {
 		return err
 	}
 
 	// マッチングできたので盤面生成
-	t.game = game.NewGame(t.me.Symbol)
+	t.Game = NewGame(t.Me.Symbol)
 
 	// 双方向ストリーミングでゲーム処理
-	return t.play(ctx, pb.NewGameServiceClient(conn))
+	return tr.ExecPlay(ctx, pb.NewGameServiceClient(conn), t)
 }
 
-func (t *TicTacToe) matching(ctx context.Context, cli pb.MatchingServiceClient) error {
+func (tr ticTacToeRepository) Matching(ctx context.Context, cli pb.MatchingServiceClient, t *entity.TicTacToe) error {
 	// マッチングリクエスト
 	stream, err := cli.JoinRoom(ctx, &pb.JoinRoomRequest{})
 	if err != nil {
@@ -81,8 +81,8 @@ func (t *TicTacToe) matching(ctx context.Context, cli pb.MatchingServiceClient) 
 
 		if resp.GetStatus() == pb.JoinRoomResponse_MATCHED {
 			// マッチング成立
-			t.room = build.Room(resp.GetRoom())
-			t.me = build.Player(resp.GetMe())
+			t.Room = build.Room(resp.GetRoom())
+			t.Me = build.Player(resp.GetMe())
 			fmt.Printf("Matched room_id=%d\n", resp.GetRoom().GetId())
 			return nil
 		} else if resp.GetStatus() == pb.JoinRoomResponse_WAITTING {
@@ -92,7 +92,7 @@ func (t *TicTacToe) matching(ctx context.Context, cli pb.MatchingServiceClient) 
 	}
 }
 
-func (t *TicTacToe) play(ctx context.Context, cli pb.GameServiceClient) error {
+func (tr ticTacToeRepository) ExecPlay(ctx context.Context, cli pb.GameServiceClient, t *entity.TicTacToe) error {
 	c, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -104,13 +104,13 @@ func (t *TicTacToe) play(ctx context.Context, cli pb.GameServiceClient) error {
 	defer stream.CloseSend()
 
 	go func() {
-		err := t.send(c, stream)
+		err := tr.Send(c, stream, t)
 		if err != nil {
 			cancel()
 		}
 	}()
 
-	err = t.recieve(c, stream)
+	err = tr.Receive(c, stream, t)
 	if err != nil {
 		cancel()
 		return err
@@ -119,8 +119,7 @@ func (t *TicTacToe) play(ctx context.Context, cli pb.GameServiceClient) error {
 	return nil
 }
 
-func (t *TicTacToe) Play() (bool, error) {
-	t.game.Display(1)
+func (tr ticTacToeRepository) Play(t *entity.TicTacToe) (bool, error) {
 	fmt.Print("Input Your Move (ex. A-1):")
 	stdin := bufio.NewScanner(os.Stdin)
 	stdin.Scan()
@@ -131,12 +130,10 @@ func (t *TicTacToe) Play() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	isGameOver, err := t.game.Move(x-1, y-1, t.me.Symbol)
+	isGameOver, err := tr.gr.Move(x-1, y-1, t.Me.Symbol, t.Game)
 	if err != nil {
 		return false, err
 	}
-
-	t.game.Display(1)
 
 	return isGameOver, nil
 }
@@ -145,7 +142,7 @@ func (t *TicTacToe) Play() (bool, error) {
 func parseInput(txt string) (int32, int32, error) {
 	ss := strings.Split(txt, "-")
 	if len(ss) != 2 {
-		return 0, 0, fmt.Errorf("入力が不正です。例：A-1")
+		return 0, 0, fmt.Errorf("入力が不正です。例: A-1")
 	}
 
 	xs := ss[0]
@@ -153,22 +150,22 @@ func parseInput(txt string) (int32, int32, error) {
 	x := int32(xrs[0]-rune('A')) + 1
 
 	if x < 1 || 8 < x {
-		return 0, 0, fmt.Errorf("入力が不正です。例：A-1")
+		return 0, 0, fmt.Errorf("入力が不正です。例: A-1")
 	}
 
 	ys := ss[1]
 	y, err := strconv.ParseInt(ys, 10, 32)
 	if err != nil {
-		return 0, 0, fmt.Errorf("入力が不正です。例：A-1")
+		return 0, 0, fmt.Errorf("入力が不正です。例: A-1")
 	}
 	if y < 1 || 8 < y {
-		return 0, 0, fmt.Errorf("入力が不正です。例：A-1")
+		return 0, 0, fmt.Errorf("入力が不正です。例: A-1")
 	}
 
 	return x, int32(y), nil
 }
 
-func (t *TicTacToe) recieve(ctx context.Context, stream pb.GameService_PlayClient) error {
+func (tr ticTacToeRepository) Receive(ctx context.Context, stream pb.GameService_PlayClient, t *entity.TicTacToe) error {
 	for {
 		// サーバーからのストリーミングを受け取る
 		res, err := stream.Recv()
@@ -182,27 +179,27 @@ func (t *TicTacToe) recieve(ctx context.Context, stream pb.GameService_PlayClien
 			// 開始待機中
 		case *pb.PlayResponse_Ready:
 			// 開始
-			t.started = true
-			t.game.Display(t.me.Symbol)
+			t.Started = true
+			tr.gr.Display(t.Me.Symbol, t.Game)
 		case *pb.PlayResponse_Move:
 			// 手を打たれた
-			color := build.Symbol(res.GetMove().GetPlayer().GetSymbol())
-			if color != t.me.Symbol {
+			symbol := build.Symbol(res.GetMove().GetPlayer().GetSymbol())
+			if symbol != t.Me.Symbol {
 				move := res.GetMove().GetMove()
 				// クライアント側のゲーム情報に反映させる
-				t.game.Move(move.GetX(), move.GetY(), color)
+				tr.gr.Move(move.GetX(), move.GetY(), symbol, t.Game)
 				fmt.Print("Input Your Move (ex. A-1):")
 			}
 		case *pb.PlayResponse_Finished:
 			// ゲームが終了した
-			t.finished = true
+			t.Finished = true
 
 			// 勝敗を表示する
 			winner := build.Symbol(res.GetFinished().Winner)
 			fmt.Println("")
-			if winner == game.None {
+			if winner == entity.None {
 				fmt.Println("Draw!")
-			} else if winner == t.me.Symbol {
+			} else if winner == t.Me.Symbol {
 				fmt.Println("You Win!")
 			} else {
 				fmt.Println("You Lose!")
@@ -223,19 +220,19 @@ func (t *TicTacToe) recieve(ctx context.Context, stream pb.GameService_PlayClien
 	}
 }
 
-func (t *TicTacToe) send(ctx context.Context, stream pb.GameService_PlayClient) error {
+func (tr ticTacToeRepository) Send(ctx context.Context, stream pb.GameService_PlayClient, t *entity.TicTacToe) error {
 	for {
 		t.RLock()
 
-		if t.finished {
+		if t.Finished {
 			// recieve側で終了されたので、send側も終了する
 			t.RUnlock()
 			return nil
-		} else if !t.started {
+		} else if !t.Started {
 			// 未開始なので、開始リクエストを送る
 			err := stream.Send(&pb.PlayRequest{
-				RoomId: t.room.ID,
-				Player: build.PBPlayer(t.me),
+				RoomId: t.Room.ID,
+				Player: build.PBPlayer(t.Me),
 				Action: &pb.PlayRequest_Start{
 					Start: &pb.PlayRequest_StartAction{},
 				},
@@ -248,7 +245,7 @@ func (t *TicTacToe) send(ctx context.Context, stream pb.GameService_PlayClient) 
 			for {
 				// 相手が開始するまで待機する
 				t.RLock()
-				if t.started {
+				if t.Started {
 					// 開始をrecieveした
 					t.RUnlock()
 					fmt.Println("READY GO!")
@@ -277,7 +274,7 @@ func (t *TicTacToe) send(ctx context.Context, stream pb.GameService_PlayClient) 
 
 			// 手を打つ
 			t.Lock()
-			_, err = t.game.Move(x, y, t.me.Symbol)
+			_, err = tr.gr.Move(x, y, t.Me.Symbol, t.Game)
 			t.Unlock()
 			if err != nil {
 				fmt.Println(err)
@@ -287,8 +284,8 @@ func (t *TicTacToe) send(ctx context.Context, stream pb.GameService_PlayClient) 
 			go func() {
 				// サーバーに手を送る
 				err = stream.Send(&pb.PlayRequest{
-					RoomId: t.room.ID,
-					Player: build.PBPlayer(t.me),
+					RoomId: t.Room.ID,
+					Player: build.PBPlayer(t.Me),
 					Action: &pb.PlayRequest_Move{
 						Move: &pb.PlayRequest_MoveAction{
 							Move: &pb.Move{
