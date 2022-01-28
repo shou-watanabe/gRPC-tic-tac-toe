@@ -11,22 +11,22 @@ import (
 	"gRPC-tic-tac-toe/usecase"
 )
 
-type gameHandler struct {
+type GameHandler struct {
 	sync.RWMutex
 	gameUsecase usecase.GameUsecase
 	games       map[int32]*entity.Game                // ゲーム情報（盤面など）を格納する
 	client      map[int32][]pb.GameService_PlayServer // 状態変更時にクライアントにストリーミングを返すために格納する
 }
 
-func NewGameHandler(gu usecase.GameUsecase) *gameHandler {
-	return &gameHandler{
+func NewGameHandler(gu usecase.GameUsecase) *GameHandler {
+	return &GameHandler{
 		games:       make(map[int32]*entity.Game),
 		client:      make(map[int32][]pb.GameService_PlayServer),
 		gameUsecase: gu,
 	}
 }
 
-func (h *gameHandler) Play(stream pb.GameService_PlayServer) error {
+func (h *GameHandler) Play(stream pb.GameService_PlayServer) error {
 	for {
 		//クライアントからリクエストを受信したらreqにリクエストが代入されます
 		req, err := stream.Recv()
@@ -58,7 +58,7 @@ func (h *gameHandler) Play(stream pb.GameService_PlayServer) error {
 	}
 }
 
-func (h *gameHandler) start(stream pb.GameService_PlayServer, roomID int32, me *entity.Player) error {
+func (h *GameHandler) start(stream pb.GameService_PlayServer, roomID int32, me *entity.Player) error {
 	h.Lock()
 	defer h.Unlock()
 
@@ -102,7 +102,7 @@ func (h *gameHandler) start(stream pb.GameService_PlayServer, roomID int32, me *
 	return nil
 }
 
-func (h *gameHandler) move(roomID int32, x int32, y int32, p *entity.Player) error {
+func (h *GameHandler) move(roomID int32, x int32, y int32, p *entity.Player) error {
 	h.Lock()
 	defer h.Unlock()
 
