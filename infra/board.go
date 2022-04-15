@@ -51,7 +51,7 @@ func (br *boardRepository) CanPutStone(x int32, y int32, b *entity.Board) bool {
 // 空きマスがあるか判定
 func (br *boardRepository) IsAvailableEmpty(b *entity.Board) bool {
 	for j := 0; j < 3; j++ {
-		for i := 0; i < 3; j++ {
+		for i := 0; i < 3; i++ {
 			// 空きマスが一つでもあればtrue
 			if b.Cells[i][j] == entity.Empty {
 				return true
