@@ -108,7 +108,6 @@ func (h *GameHandler) move(roomID int32, x int32, y int32, p *entity.Player) err
 
 	g := h.games[roomID]
 
-	fmt.Println("ここでエラー？")
 	finished, err := h.gameUsecase.Move(x, y, p.Symbol, g)
 	if err != nil {
 		return err
